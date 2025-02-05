@@ -25,7 +25,6 @@ export default function Popup() {
   let childrenComponent = null;
   switch (popupState.element.type) {
     case TYPE.PRODUCT_ITEM:
-      console.log(123);
       childrenComponent = (
         <ProductItemPopup product={popupState.element.data} />
       );

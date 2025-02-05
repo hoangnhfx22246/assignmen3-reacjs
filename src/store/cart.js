@@ -5,7 +5,7 @@ const initialCartState = {
     listCart: JSON.parse(localStorage.getItem("listCart")) || [],
   },
 };
-// todo khởi tạo createSlice cho popup
+// todo khởi tạo createSlice cho cart
 const cartSlice = new createSlice({
   name: "cart",
   initialState: initialCartState,
@@ -52,4 +52,4 @@ const cartSlice = new createSlice({
 });
 
 export const cartActions = cartSlice.actions;
-export default cartSlice.reducer; //* export reducer của popup cho store
+export default cartSlice.reducer; //* export reducer của cart cho store

@@ -11,20 +11,20 @@ export default function Categories() {
           BROWSE OUR CATEGORIES
         </h2>
         <div className="grid gap-6 grid-cols-6">
-          <Link to="/shop" className="col-span-3 hover:opacity-60 duration-150">
-            <img src="/product_1.png" alt="product_1" />
+          <Link to="shop" className="col-span-3 hover:opacity-60 duration-150">
+            <img src="./product_1.png" alt="product_1" />
           </Link>
-          <Link to="/shop" className="col-span-3 hover:opacity-60 duration-150">
-            <img src="/product_2.png" alt="product_2" />
+          <Link to="shop" className="col-span-3 hover:opacity-60 duration-150">
+            <img src="./product_2.png" alt="product_2" />
           </Link>
-          <Link to="/shop" className="col-span-2 hover:opacity-60 duration-150">
-            <img src="/product_3.png" alt="product_3" />
+          <Link to="shop" className="col-span-2 hover:opacity-60 duration-150">
+            <img src="./product_3.png" alt="product_3" />
           </Link>
-          <Link to="/shop" className="col-span-2 hover:opacity-60 duration-150">
-            <img src="/product_4.png" alt="product_4" />
+          <Link to="shop" className="col-span-2 hover:opacity-60 duration-150">
+            <img src="./product_4.png" alt="product_4" />
           </Link>
-          <Link to="/shop" className="col-span-2 hover:opacity-60 duration-150">
-            <img src="/product_5.png" alt="product_5" />
+          <Link to="shop" className="col-span-2 hover:opacity-60 duration-150">
+            <img src="./product_5.png" alt="product_5" />
           </Link>
         </div>
       </div>
