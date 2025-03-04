@@ -18,7 +18,7 @@ export default function ProductList({ products, classNameList, usePopup }) {
           products.length > 0 &&
           products.map((product) => (
             <ProductItem
-              key={product._id.$oid}
+              key={product["_id"]}
               product={product}
               usePopup={usePopup}
             />

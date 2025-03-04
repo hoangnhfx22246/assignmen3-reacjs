@@ -15,12 +15,13 @@ export default function HomePage() {
 
   // lấy tất cả danh sách của product về
   useEffect(() => {
+    const backendUrl = import.meta.env.VITE_URL_BACKEND;
     fetchingData(
       {
-        url: "https://firebasestorage.googleapis.com/v0/b/funix-subtitle.appspot.com/o/Boutique_products.json?alt=media&token=dc67a5ea-e3e0-479e-9eaf-5e01bcd09c74",
+        url: `${backendUrl}/products/`,
       },
       (data) => {
-        setProducts(data.slice(0, 8));
+        setProducts(data.result);
       }
     );
   }, [fetchingData]);

@@ -7,7 +7,8 @@ import {
   validatePassword,
   validatePhoneVN,
 } from "../validate/validate";
-import { getUserByEmail, setUser } from "../localStorage/user";
+
+import axios from "axios";
 
 export default function RegisterPage() {
   // xử lý input
@@ -22,7 +23,7 @@ export default function RegisterPage() {
   const [error, setError] = useState([]);
 
   // * submit handler
-  function submitHandler(e) {
+  async function submitHandler(e) {
     e.preventDefault();
     let valid = true;
     setError([]); //reset to default error
@@ -50,13 +51,6 @@ export default function RegisterPage() {
       ]);
       valid = false;
     }
-    if (getUserByEmail(enteredEmail.current.value)) {
-      setError((prevError) => [
-        ...prevError,
-        "Email already exists! Please use another email",
-      ]);
-      valid = false;
-    }
     if (!validatePhoneVN(enteredPhone.current.value)) {
       setError((prevError) => [
         ...prevError,
@@ -65,17 +59,21 @@ export default function RegisterPage() {
       valid = false;
     }
     if (valid) {
-      setUser({
-        id: Math.floor(Math.random() * 10000000).toString(),
-        name: enteredName.current.value,
-        email: enteredEmail.current.value,
-        password: enteredPassword.current.value,
-        phone: enteredPhone.current.value,
-      });
-      navigate("/login");
+      try {
+        const backendUrl = import.meta.env.VITE_URL_BACKEND;
+
+        await axios.post(`${backendUrl}/auth/signup`, {
+          name: enteredName.current.value,
+          email: enteredEmail.current.value,
+          password: enteredPassword.current.value,
+          phone: enteredPhone.current.value,
+        });
+        navigate("/login");
+      } catch (error) {
+        setError((prevError) => [...prevError, error.response.data.message]);
+      }
     }
   }
-  console.log(error);
   return (
     <section className=" bg-[url('../src/assets/imgs/banner1.jpg')] bg-cover bg-center">
       <div className="container mx-auto py-6">

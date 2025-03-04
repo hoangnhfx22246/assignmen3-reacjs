@@ -2,10 +2,9 @@ import { useRef } from "react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { notEmptyValue } from "../validate/validate";
-import { getAllUsers } from "../localStorage/user";
 import { useDispatch } from "react-redux";
 import { currentUserAction } from "../store/currentUser";
-import { setCurrentUser } from "../localStorage/currentUser";
+import axios from "axios";
 
 export default function LoginPage() {
   // xử lý input
@@ -19,7 +18,7 @@ export default function LoginPage() {
   // state error message
   const [error, setError] = useState([]);
   // * submit handler
-  function submitHandler(e) {
+  async function submitHandler(e) {
     e.preventDefault();
     setError([]); //reset to default error
     if (
@@ -31,22 +30,37 @@ export default function LoginPage() {
       return;
     }
 
-    // kiểm tra đăng nhập
-    const userArr = getAllUsers();
-    const user = userArr.find(
-      (user) =>
-        user.email === enteredEmail.current.value &&
-        user.password === enteredPassword.current.value
-    );
+    // call login api
+    const backendUrl = import.meta.env.VITE_URL_BACKEND;
 
-    if (user) {
-      dispatch(currentUserAction.ON_LOGIN(user)); //* cập nhật lại state current user trong redux
-      setCurrentUser(user); //* cập nhật lại current user trong localStorage
-      navigate("/");
-    } else {
-      setError((prevError) => [...prevError, "Incorrect email or password"]);
-      enteredPassword.current.value = "";
+    try {
+      const res = await axios.post(
+        `${backendUrl}/auth/login`,
+        {
+          email: enteredEmail.current.value,
+          password: enteredPassword.current.value,
+        },
+        { withCredentials: true }
+      );
+      const dt = res.data;
+
+      if (dt) {
+        dispatch(
+          currentUserAction.ON_LOGIN({
+            user: dt.result,
+            token: dt.token,
+            expireAt: dt.expiresAt,
+          })
+        ); //* cập nhật lại state current user trong redux
+        navigate("/");
+      } else {
+        setError((prevError) => [...prevError, "Incorrect email or password"]);
+        enteredPassword.current.value = "";
+      }
+    } catch (error) {
+      setError((prevError) => [...prevError, error.response.data.message]);
     }
+
     return;
   }
   return (
@@ -56,8 +70,8 @@ export default function LoginPage() {
           <h2 className="capitalize text-center text-3xl mb-20 text-gray-500 font-light">
             Sign in
           </h2>
-          {error.map((err) => (
-            <li key={err} className="text-sm text-red-500 mb-2">
+          {error.map((err, index) => (
+            <li key={index} className="text-sm text-red-500 mb-2">
               {err}
             </li>
           ))}

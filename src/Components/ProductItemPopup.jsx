@@ -37,7 +37,7 @@ export default function ProductItemPopup({ product }) {
         <p className="text-sm leading-relaxed text-gray-400">
           {product.short_desc}
         </p>
-        <Link to={`/detail/${product._id.$oid}`}>
+        <Link to={`/detail/${product._id}`}>
           <button
             className="text-white bg-primary-black py-2 px-6 outline-none"
             onClick={handlerHidePopup}

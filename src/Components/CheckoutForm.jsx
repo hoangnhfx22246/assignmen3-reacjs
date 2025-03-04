@@ -6,16 +6,17 @@ import {
 } from "../validate/validate";
 import { useDispatch, useSelector } from "react-redux";
 import { cartActions } from "../store/cart";
-import { useNavigate } from "react-router-dom";
+import { redirect, useNavigate } from "react-router-dom";
+import axios from "axios";
 
-export default function CheckoutForm() {
+export default function CheckoutForm({ cartList, subTotal }) {
   const [errorValidate, setErrorValidate] = useState([]);
   const dispatch = useDispatch();
-  const cartList = useSelector((state) => state.cart.cart.listCart);
   const navigate = useNavigate();
+  const currentUser = useSelector((state) => state.currentUser.currentUser);
 
   // submit handler
-  function submitHandler(e) {
+  async function submitHandler(e) {
     e.preventDefault();
     if (!cartList || (cartList && cartList.length <= 0)) {
       if (window.confirm("Please add product to cart first!")) {
@@ -54,12 +55,44 @@ export default function CheckoutForm() {
       valid = false;
     }
     if (valid) {
-      e.target.reset();
-      cartList.map((item) => {
-        dispatch(cartActions.DELETE_CART(item.id));
-      });
-      setErrorValidate([]);
-      alert("Order Success");
+      const backendUrl = import.meta.env.VITE_URL_BACKEND;
+
+      try {
+        const res = await axios.post(
+          `${backendUrl}/orders/checkout`,
+          {
+            name: data["full_name"],
+            email: data["email"],
+            phone: data["phone"],
+            address: data["address"],
+            carts: cartList.map((cart) => ({
+              product: {
+                id: cart.id,
+                img: cart.img,
+                name: cart.name,
+                price: cart.price,
+              },
+              quantity: cart.quantity,
+            })),
+            totalAmount: subTotal,
+          },
+          { withCredentials: true }
+        );
+        const order = res.data.result;
+
+        // reset cart
+        cartList.map((item) => {
+          dispatch(cartActions.DELETE_CART(item.id));
+        });
+
+        // redirect to order detail
+        return navigate(`/orders/${order._id}`);
+      } catch (error) {
+        setErrorValidate((prevError) => [
+          ...prevError,
+          error.response.data.message,
+        ]);
+      }
     }
   }
 
@@ -86,6 +119,7 @@ export default function CheckoutForm() {
             name="full_name"
             placeholder="Enter Your Full Name Here!"
             className="w-full border-2 px-4 py-2 placeholder:text-sm placeholder:text-gray-400"
+            defaultValue={currentUser.name}
             required
           />
         </div>
@@ -102,6 +136,7 @@ export default function CheckoutForm() {
             name="email"
             placeholder="Enter Your Email Here!"
             className="w-full border-2 px-4 py-2 placeholder:text-sm placeholder:text-gray-400"
+            defaultValue={currentUser.email}
             required
           />
         </div>
@@ -118,6 +153,7 @@ export default function CheckoutForm() {
             name="phone"
             placeholder="Enter Your Full Name Here!"
             className="w-full border-2 px-4 py-2 placeholder:text-sm placeholder:text-gray-400"
+            defaultValue={currentUser.phone}
             required
           />
         </div>

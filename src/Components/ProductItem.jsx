@@ -28,7 +28,7 @@ export default function ProductItem({ product, usePopup }) {
         {usePopup ? (
           <img src={product.img1} alt={product.name} />
         ) : (
-          <Link to={`/detail/${product._id.$oid}`}>
+          <Link to={`/detail/${product._id}`}>
             <img src={product.img1} alt={product.name} />
           </Link>
         )}

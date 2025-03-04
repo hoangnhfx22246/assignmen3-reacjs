@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { currentUserAction } from "../../store/currentUser";
 import { useState } from "react";
+import axios from "axios";
 
 export default function NavBarMobile() {
   const currentUser = useSelector((state) => state.currentUser.currentUser); // * thông tin người dùng đang đăng nhập
@@ -24,10 +25,20 @@ export default function NavBarMobile() {
       return lastName;
     }
   }
-  function logoutHandler() {
-    //todo xử lý đăng xuất tài khoản
-    dispatch(currentUserAction.ON_LOGOUT());
-    localStorage.removeItem("current_user");
+  async function logoutHandler() {
+    const backendUrl = import.meta.env.VITE_URL_BACKEND;
+
+    try {
+      await axios.post(
+        `${backendUrl}/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+      //todo xử lý đăng xuất tài khoản
+      dispatch(currentUserAction.ON_LOGOUT());
+    } catch (error) {
+      console.error("Có lỗi xảy ra!", error);
+    }
   }
 
   return (
@@ -108,20 +119,22 @@ export default function NavBarMobile() {
           {currentUser ? (
             <>
               <li className="border-b-[1px] py-2 px-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="size-5 inline mr-1"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                  />
-                </svg>
-                {getLastName(currentUser.name)}
+                <NavLink to={"/orders"}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="size-5 inline mr-1"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                    />
+                  </svg>
+                  {getLastName(currentUser.name)}
+                </NavLink>
               </li>
               <li className="border-b-[1px] py-2 px-4">
                 <Link onClick={logoutHandler}>( logout )</Link>

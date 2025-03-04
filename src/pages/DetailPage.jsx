@@ -20,21 +20,23 @@ export default function DetailPage() {
 
   // * lấy dữ liệu về
   useEffect(() => {
+    const backendUrl = import.meta.env.VITE_URL_BACKEND;
+
     fetchingData(
       {
-        url: "https://firebasestorage.googleapis.com/v0/b/funix-subtitle.appspot.com/o/Boutique_products.json?alt=media&token=dc67a5ea-e3e0-479e-9eaf-5e01bcd09c74",
+        url: `${backendUrl}/products/`,
       },
       (resData) => {
-        const product = resData.find((data) => {
-          return data._id.$oid === params.productId;
+        const products = resData.result;
+        const product = products.find((data) => {
+          return data._id === params.productId;
         });
         setProductDetails(product);
         setMainImage(product.img1);
         setRelatedProducts(
-          resData.filter((data) => {
+          products.filter((data) => {
             return (
-              data.category === product.category &&
-              data._id.$oid !== product._id.$oid
+              data.category === product.category && data._id !== product._id
             );
           })
         );
@@ -65,7 +67,7 @@ export default function DetailPage() {
     if (quantity > 0 && quantity < 100) {
       dispatch(
         cartActions.ADD_CART({
-          id: productDetails._id.$oid,
+          id: productDetails._id,
           name: productDetails.name,
           img: productDetails.img1,
           price: Number(productDetails.price),

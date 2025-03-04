@@ -8,14 +8,22 @@ import CheckoutPage from "./pages/CheckoutPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Root from "./pages/Root";
-import { checkAuthLoader, checkNoAuthLoader } from "./util/auth";
+import OrderDetailPage from "./pages/OrderDetailPage";
+import PrivateRoute from "./Components/PrivateRoute";
+import PublicRoute from "./Components/PublicRoute";
+import Authentication from "./Components/Authentication";
+import OrdersPage from "./pages/OrdersPage";
 
 //todo create router
 const router = createBrowserRouter(
   [
     {
       path: "/",
-      element: <Root />,
+      element: (
+        <Authentication>
+          <Root />
+        </Authentication>
+      ),
       children: [
         {
           index: true,
@@ -35,17 +43,43 @@ const router = createBrowserRouter(
         },
         {
           path: "checkout",
-          element: <CheckoutPage />,
+          element: (
+            <PrivateRoute>
+              <CheckoutPage />
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "orders",
+          element: (
+            <PrivateRoute>
+              <OrdersPage />
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "orders/:id",
+          element: (
+            <PrivateRoute>
+              <OrderDetailPage />
+            </PrivateRoute>
+          ),
         },
         {
           path: "login",
-          element: <LoginPage />,
-          loader: checkNoAuthLoader,
+          element: (
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          ),
         },
         {
           path: "register",
-          element: <RegisterPage />,
-          loader: checkNoAuthLoader,
+          element: (
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          ),
         },
       ],
     },
@@ -54,7 +88,7 @@ const router = createBrowserRouter(
 );
 
 function App() {
-  return <RouterProvider router={router}></RouterProvider>;
+  return <RouterProvider router={router} />;
 }
 
 export default App;

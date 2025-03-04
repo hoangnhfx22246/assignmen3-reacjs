@@ -2,9 +2,8 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import CartItem from "./CartItem";
 
-export default function CartList() {
+export default function CartList({ cartList }) {
   //* cart redux
-  const cartList = useSelector((state) => state.cart.cart.listCart);
   return (
     <>
       <table className="w-full">

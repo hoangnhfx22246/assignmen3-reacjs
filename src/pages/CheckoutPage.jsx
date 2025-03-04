@@ -1,7 +1,13 @@
+import { useSelector } from "react-redux";
 import CheckoutForm from "../Components/CheckoutForm";
 import CheckoutOrder from "../Components/CheckoutOrder";
 
 export default function CheckoutPage() {
+  const cartList = useSelector((state) => state.cart.cart.listCart);
+  const subTotal = cartList.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
   return (
     <section>
       <div className="container mx-auto">
@@ -21,10 +27,10 @@ export default function CheckoutPage() {
         </h2>
         <div className="flex flex-col md:grid mt-4 lg:grid-cols-3 grid-cols-5 gap-8">
           <div className="lg:col-span-2 col-span-3">
-            <CheckoutForm />
+            <CheckoutForm cartList={cartList} subTotal={subTotal} />
           </div>
           <div className="lg:col-span-1 col-span-2 order-first md:order-none">
-            <CheckoutOrder />
+            <CheckoutOrder cartList={cartList} subTotal={subTotal} />
           </div>
         </div>
       </div>

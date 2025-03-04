@@ -1,9 +1,10 @@
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { currentUserAction } from "../store/currentUser";
 import NavBarMobile from "./Responsive/NavBarMobile";
+import axios from "axios";
 
 export default function NavBar() {
   const currentUser = useSelector((state) => state.currentUser.currentUser); // * thông tin người dùng đang đăng nhập
@@ -23,10 +24,20 @@ export default function NavBar() {
       return lastName;
     }
   }
-  function logoutHandler() {
-    //todo xử lý đăng xuất tài khoản
-    dispatch(currentUserAction.ON_LOGOUT());
-    localStorage.removeItem("current_user");
+  async function logoutHandler() {
+    const backendUrl = import.meta.env.VITE_URL_BACKEND;
+
+    try {
+      await axios.post(
+        `${backendUrl}/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+      //todo xử lý đăng xuất tài khoản
+      dispatch(currentUserAction.ON_LOGOUT());
+    } catch (error) {
+      console.error("Có lỗi xảy ra!", error);
+    }
   }
   return (
     <section id="navbar" className="shadow-sm">
@@ -89,7 +100,7 @@ export default function NavBar() {
             {currentUser ? (
               <>
                 <li>
-                  <NavLink>
+                  <NavLink to={"/orders"}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="currentColor"

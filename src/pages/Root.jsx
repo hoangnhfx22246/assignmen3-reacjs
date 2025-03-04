@@ -3,7 +3,6 @@ import NavBar from "../Components/NavBar";
 import Footer from "../Components/Footer";
 import Popup from "../UI/Popup";
 import LiveChat from "../Components/LiveChat";
-
 export default function Root() {
   return (
     <>

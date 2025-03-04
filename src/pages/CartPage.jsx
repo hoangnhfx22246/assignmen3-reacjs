@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom";
 import CartList from "../Components/CartList";
 import CartTotal from "../Components/CartTotal";
+import { useSelector } from "react-redux";
 
 export default function CartPage() {
+  const cartList = useSelector((state) => state.cart.cart.listCart);
+  const subTotal = cartList.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+
   return (
     <section>
       <div className="container mx-auto">
@@ -17,10 +24,10 @@ export default function CartPage() {
         </h2>
         <div className="flex flex-col md:grid mt-4 grid-cols-3 gap-8">
           <div className="col-span-2">
-            <CartList />
+            <CartList cartList={cartList} />
           </div>
           <div className="col-span-1 order-first md:order-none">
-            <CartTotal />
+            <CartTotal cartList={cartList} subTotal={subTotal} />
           </div>
         </div>
       </div>
