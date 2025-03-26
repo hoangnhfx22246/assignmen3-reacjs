@@ -1,117 +1,133 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { io } from "socket.io-client";
+
+const socket = io(import.meta.env.VITE_URL_BACKEND);
 
 export default function LiveChat() {
+  const currentUser = useSelector((state) => state.currentUser.currentUser); // * thông tin người dùng đang đăng nhập
+
   const [showLiveChat, setShowLiveChat] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState("");
+  const messagesContainerRef = useRef(null); // Tham chiếu đến container của danh sách tin nhắn
+
+  // Cuộn xuống cuối danh sách tin nhắn
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    if (!showLiveChat) return;
+
+    // Kiểm tra và lấy roomId từ localStorage
+    let roomId = localStorage.getItem("roomId");
+    if (!roomId) {
+      roomId = `room_${Date.now()}`; // Tạo roomId mới nếu chưa tồn tại
+      localStorage.setItem("roomId", roomId); // Lưu roomId vào localStorage
+    }
+
+    // Kết nối với server và tham gia room
+    socket.emit("joinRoom", roomId);
+
+    // Lắng nghe tin nhắn từ server
+    const handleRoomJoined = (data) => {
+      setMessages(data.messages); // Thêm tin nhắn mới vào danh sách
+    };
+
+    socket.on("roomJoined", handleRoomJoined);
+
+    const handleReceiveMessage = (data) => {
+      // Thêm tin nhắn vào danh sách (tạm thời hiển thị trước khi server phản hồi)
+      setMessages((prev) => [...prev, data]);
+    };
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("chatEnded", () => {
+      setMessages([]); // Xóa danh sách tin nhắn
+      setShowLiveChat(false);
+      localStorage.removeItem("roomId");
+    });
+
+    // Cleanup khi component unmount
+    return () => {
+      socket.off("roomJoined", handleRoomJoined); // Xóa listener
+      socket.off("receiveMessage", handleReceiveMessage); // Xóa listener
+      socket.off("chatEnded"); // Xóa listener
+    };
+  }, [showLiveChat, currentUser]);
+
+  useEffect(() => {
+    scrollToBottom(); // Cuộn xuống cuối khi danh sách tin nhắn thay đổi
+  }, [messages]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    // Lấy roomId từ localStorage
+    const roomId = localStorage.getItem("roomId");
+    const data = {
+      roomId,
+      content: message,
+      sender: currentUser._id,
+    };
+
+    // Gửi tin nhắn lên server
+    socket.emit("sendMessage", data);
+
+    // Xóa nội dung ô nhập sau khi gửi
+    setMessage("");
+  };
+  console.log(messages);
+
+  const handleEndChat = () => {
+    socket.emit("endChat", localStorage.getItem("roomId"));
+    // Gửi tin nhắn lên server
+  };
 
   return (
     <div className="fixed right-1 top-[85%]">
       {showLiveChat && (
-        <div className="flex flex-col rounded-lg md:w-[500px] md:h-[500px] w-[330px] h-[400px] shadow-[0_2px_12px_0_rgba(0,0,0,0.3)] bg-white absolute right-1 md:right-full md:top-[-580px] top-[-420px] animate-livechat">
-          <div className="flex justify-between md:px-6 md:py-4 px-2 py-4 border-b-[1px] items-center">
+        <div className="flex flex-col rounded-lg w-[330px] h-[400px] md:w-[500px] md:h-[500px] shadow-lg bg-white absolute right-1 md:right-full md:top-[-580px] top-[-420px] animate-livechat">
+          <div className="flex justify-between px-2 py-4 md:px-6 md:py-4 border-b items-center">
             <h3 className="font-bold">Customer Support</h3>
-            <p className="text-xs px-2 py-1 bg-gray-200 text-gray-500">
-              Let's Chat App
-            </p>
+            <button
+              onClick={handleEndChat}
+              className="text-xs px-2 py-1 bg-red-500 text-white rounded"
+            >
+              End Chat
+            </button>
           </div>
-          <div className="grid grid-cols-[1fr_120px] py-2 px-2 grow overflow-hidden">
-            <div className="flex flex-col gap-4 text-sm font-light col-span-2 md:col-span-1 overflow-y-auto">
-              <div className="p-2 rounded-sm bg-[#48B0F7] self-end text-white ml-14">
-                Xin chào
+          <div
+            ref={messagesContainerRef} // Tham chiếu đến container
+            className="flex flex-col gap-4 text-sm font-light overflow-y-auto px-4 py-2 grow"
+          >
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`p-2 rounded-sm ${
+                  msg.sender?.role === "client"
+                    ? "bg-[#48B0F7] self-end text-white"
+                    : "bg-[#F5F6F7] self-start text-gray-600"
+                }`}
+              >
+                {msg.content || "No content available"}
               </div>
-              <div className="p-2 rounded-sm bg-[#48B0F7] self-end text-white ml-14">
-                Làm thế nào để mua sản phẩm
-              </div>
-
-              <div className="font-light  self-start text-gray-400 flex items-center gap-4 mr-14">
-                <div className="rounded-full bg-[#F5F6F7] p-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="size-5"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="p-2 rounded-sm bg-[#F5F6F7]">
-                  ADMIN: Chào bạn
-                </div>
-              </div>
-              <div className="font-light  self-start text-gray-400 flex items-center gap-4 mr-14">
-                <div className="rounded-full bg-[#F5F6F7] p-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="size-5"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="p-2 rounded-sm bg-[#F5F6F7]">
-                  ADMIN: Bạn có thể vào mục shop để xem sản phẩm
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
-          <div className="grid grid-cols-[1fr_110px] border-t-[1px] md:px-6 md:py-4 p-2 bg-[#F9FAFB]">
-            <div className="flex gap-3 items-center text-gray-400 col-span-2 md:col-span-1">
-              <div className="rounded-full bg-[#F5F6F7] p-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="size-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
+          <form onSubmit={handleSubmit} className="border-t p-2 bg-[#F9FAFB]">
+            <div className="flex gap-3 items-center">
               <input
                 type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 placeholder="Enter Message!"
-                className="focus:outline-none bg-white placeholder:text-sm px-2 py-1 text-gray-600 w-[170px] md:w-auto"
+                className="focus:outline-none bg-white placeholder:text-sm px-2 py-1 text-gray-600 w-full"
               />
-              <div className="cursor-pointer">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="size-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18.97 3.659a2.25 2.25 0 0 0-3.182 0l-10.94 10.94a3.75 3.75 0 1 0 5.304 5.303l7.693-7.693a.75.75 0 0 1 1.06 1.06l-7.693 7.693a5.25 5.25 0 1 1-7.424-7.424l10.939-10.94a3.75 3.75 0 1 1 5.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 0 1 5.91 15.66l7.81-7.81a.75.75 0 0 1 1.061 1.06l-7.81 7.81a.75.75 0 0 0 1.054 1.068L18.97 6.84a2.25 2.25 0 0 0 0-3.182Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="cursor-pointer">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="size-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-2.625 6c-.54 0-.828.419-.936.634a1.96 1.96 0 0 0-.189.866c0 .298.059.605.189.866.108.215.395.634.936.634.54 0 .828-.419.936-.634.13-.26.189-.568.189-.866 0-.298-.059-.605-.189-.866-.108-.215-.395-.634-.936-.634Zm4.314.634c.108-.215.395-.634.936-.634.54 0 .828.419.936.634.13.26.189.568.189.866 0 .298-.059.605-.189.866-.108.215-.395.634-.936.634-.54 0-.828-.419-.936-.634a1.96 1.96 0 0 1-.189-.866c0-.298.059-.605.189-.866Zm2.023 6.828a.75.75 0 1 0-1.06-1.06 3.75 3.75 0 0 1-5.304 0 .75.75 0 0 0-1.06 1.06 5.25 5.25 0 0 0 7.424 0Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="cursor-pointer">
+              <button className="cursor-pointer" type="submit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -120,16 +136,14 @@ export default function LiveChat() {
                 >
                   <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
                 </svg>
-              </div>
+              </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
       <div
         className="bg-primary-black text-white rounded-full p-1 cursor-pointer"
-        onClick={() => {
-          setShowLiveChat((prevSate) => !prevSate);
-        }}
+        onClick={() => setShowLiveChat((prev) => !prev)}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -52,7 +52,11 @@ export default function OrderDetailPage() {
                     <td>{cart.product.id}</td>
                     <td>
                       <img
-                        src={cart.product.img}
+                        src={
+                          import.meta.env.VITE_URL_BACKEND +
+                          "/" +
+                          cart.product.img
+                        }
                         alt={cart.product.name}
                         className="w-full"
                       />

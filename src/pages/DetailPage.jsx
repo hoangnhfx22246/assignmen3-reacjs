@@ -6,6 +6,7 @@ import { useRef } from "react";
 import ProductList from "../Components/ProductList";
 import { useDispatch } from "react-redux";
 import { cartActions } from "../store/cart";
+import { useSelector } from "react-redux";
 
 export default function DetailPage() {
   const [productDetails, setProductDetails] = useState({}); //* state product details
@@ -15,6 +16,7 @@ export default function DetailPage() {
   const enteredQuantity = useRef();
 
   const [mainImage, setMainImage] = useState("");
+  const cartList = useSelector((state) => state.cart.cart.listCart);
 
   const dispatch = useDispatch();
 
@@ -31,8 +33,9 @@ export default function DetailPage() {
         const product = products.find((data) => {
           return data._id === params.productId;
         });
+
         setProductDetails(product);
-        setMainImage(product.img1);
+        setMainImage(product.images[0]);
         setRelatedProducts(
           products.filter((data) => {
             return (
@@ -44,7 +47,12 @@ export default function DetailPage() {
     );
   }, [fetchingData, params.productId]);
 
-  // console.log(relatedProducts);
+  const productInCart = cartList.find((cart) => cart.id === params.productId);
+  const quantityCartProduct = productInCart ? productInCart.quantity : 0;
+  const remainingQuantity =
+    productDetails.quantity - quantityCartProduct >= 0
+      ? productDetails.quantity - quantityCartProduct
+      : 0;
 
   // * ****** click img handler
   function handlerClickImg(thumbnail) {
@@ -63,15 +71,24 @@ export default function DetailPage() {
   // * ****** handler add cart
   function addCart(e) {
     e.preventDefault();
+    if (remainingQuantity <= 0) {
+      alert("out of stock");
+      return;
+    }
     const quantity = Number(enteredQuantity.current.value);
+    if (remainingQuantity - quantity < 0) {
+      alert("maximum select quantity is " + remainingQuantity);
+      return;
+    }
     if (quantity > 0 && quantity < 100) {
       dispatch(
         cartActions.ADD_CART({
           id: productDetails._id,
           name: productDetails.name,
-          img: productDetails.img1,
+          img: productDetails.images[0],
           price: Number(productDetails.price),
           quantity,
+          maxQuantity: productDetails.quantity,
         })
       );
     }
@@ -89,56 +106,35 @@ export default function DetailPage() {
             {/* product details component */}
             <div className="flex flex-col md:grid grid-cols-12 gap-8 mb-20">
               <div className="grid grid-cols-4 md:flex flex-col gap-4">
-                <img
-                  className={
-                    `cursor-pointer p-1 ` +
-                    (productDetails.img1 === mainImage && "border-2")
-                  }
-                  src={productDetails.img1}
-                  alt={productDetails.name}
-                  onClick={() => {
-                    handlerClickImg(productDetails.img1);
-                  }}
-                />
-                <img
-                  className={
-                    `cursor-pointer p-1 ` +
-                    (productDetails.img2 === mainImage && "border-2")
-                  }
-                  src={productDetails.img2}
-                  alt={productDetails.name}
-                  onClick={() => {
-                    handlerClickImg(productDetails.img2);
-                  }}
-                />
-                <img
-                  className={
-                    `cursor-pointer p-1 ` +
-                    (productDetails.img3 === mainImage && "border-2")
-                  }
-                  src={productDetails.img3}
-                  alt={productDetails.name}
-                  onClick={() => {
-                    handlerClickImg(productDetails.img3);
-                  }}
-                />
-                <img
-                  className={
-                    `cursor-pointer p-1 ` +
-                    (productDetails.img4 === mainImage && "border-2")
-                  }
-                  src={productDetails.img4}
-                  alt={productDetails.name}
-                  onClick={() => {
-                    handlerClickImg(productDetails.img4);
-                  }}
-                />
+                {productDetails.images?.map((image) => (
+                  <img
+                    key={image}
+                    className={
+                      `cursor-pointer p-1 ` +
+                      (image === mainImage && "border-2")
+                    }
+                    src={import.meta.env.VITE_URL_BACKEND + "/" + image}
+                    alt={productDetails.name}
+                    onClick={() => {
+                      handlerClickImg(image);
+                    }}
+                  />
+                ))}
               </div>
               <div className="md:col-span-5 order-first md:order-none">
-                <img src={mainImage} alt={productDetails.name} />
+                <img
+                  src={import.meta.env.VITE_URL_BACKEND + "/" + mainImage}
+                  alt={productDetails.name}
+                />
               </div>
               <div className="col-span-6 space-y-5">
                 <h2 className="text-3xl font-medium">{productDetails.name}</h2>
+                {remainingQuantity <= 0 && (
+                  <h2 className="text-2xl font-medium bg-red-700 text-white p-2 inline-block">
+                    out of stock
+                  </h2>
+                )}
+
                 <p className="text-xl text-gray-500 font-light">
                   {Number(productDetails.price).toLocaleString() + " VND"}
                 </p>
@@ -161,10 +157,15 @@ export default function DetailPage() {
                     </label>
                     <div className="flex items-center ml-14">
                       <button
+                        className={`${
+                          remainingQuantity <= 0 &&
+                          "text-gray-300 cursor-not-allowed"
+                        }`}
                         type="button"
                         onClick={() => {
                           handlerChangeQuantity(-1);
                         }}
+                        disabled={remainingQuantity <= 0}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -187,14 +188,23 @@ export default function DetailPage() {
                         max={99}
                         name="quantity"
                         id="quantity"
-                        className="max-w-10 text-center"
+                        className={`max-w-10 text-center ${
+                          remainingQuantity <= 0 &&
+                          "text-gray-400 cursor-not-allowed"
+                        }`}
                         ref={enteredQuantity}
+                        disabled={remainingQuantity <= 0}
                       />
                       <button
+                        className={`${
+                          remainingQuantity <= 0 &&
+                          "text-gray-300 cursor-not-allowed"
+                        }`}
                         type="button"
                         onClick={() => {
                           handlerChangeQuantity(1);
                         }}
+                        disabled={remainingQuantity <= 0}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -211,7 +221,12 @@ export default function DetailPage() {
                       </button>
                     </div>
                   </div>
-                  <button className="bg-primary-black text-white py-2 px-6 italic font-light">
+                  <button
+                    className={`bg-primary-black text-white py-2 px-6 italic font-light ${
+                      remainingQuantity <= 0 && "bg-gray-300 cursor-not-allowed"
+                    }`}
+                    disabled={remainingQuantity <= 0}
+                  >
                     Add to cart
                   </button>
                 </form>

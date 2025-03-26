@@ -2,7 +2,7 @@ import CategoryShop from "../Components/CategoryShop";
 import SearchFormShop from "../Components/SearchFormShop";
 import ProductList from "../Components/ProductList";
 import { useFetch } from "../hooks/useFetch";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 

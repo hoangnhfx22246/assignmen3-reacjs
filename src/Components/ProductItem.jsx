@@ -26,10 +26,16 @@ export default function ProductItem({ product, usePopup }) {
         onClick={usePopup ? handlerShowPopup : null}
       >
         {usePopup ? (
-          <img src={product.img1} alt={product.name} />
+          <img
+            src={import.meta.env.VITE_URL_BACKEND + "/" + product.images[0]}
+            alt={product.name}
+          />
         ) : (
           <Link to={`/detail/${product._id}`}>
-            <img src={product.img1} alt={product.name} />
+            <img
+              src={import.meta.env.VITE_URL_BACKEND + "/" + product.images[0]}
+              alt={product.name}
+            />
           </Link>
         )}
       </div>

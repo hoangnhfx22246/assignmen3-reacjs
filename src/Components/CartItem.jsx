@@ -15,6 +15,11 @@ export default function CartItem({ item }) {
   }
   // * handler save change quantity input
   function handlerSaveChange(quantity) {
+    if (cartItem.maxQuantity - quantity < 0) {
+      alert("out of stock");
+      return;
+    }
+
     if (quantity <= 0) {
       handlerDelete(cartItem.id);
       return;
@@ -30,7 +35,11 @@ export default function CartItem({ item }) {
   return (
     <tr className="text-center">
       <td>
-        <img src={cartItem.img} alt="" className="w-full object-cover" />
+        <img
+          src={import.meta.env.VITE_URL_BACKEND + "/" + cartItem.img}
+          alt=""
+          className="w-full object-cover"
+        />
       </td>
       <td>
         <h2 className="font-medium md:line-clamp-3 line-clamp-1">
